@@ -1,0 +1,20 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: seed-admin
+  namespace: meeting-ai
+spec:
+  backoffLimit: 3
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: seed-admin
+          image: YOUR_REGISTRY/meeting-ai-backend:latest
+          imagePullPolicy: Always
+          command: ["python", "-m", "app.users.seed_admin"]
+          envFrom:
+            - configMapRef:
+                name: meeting-ai-config
+            - secretRef:
+                name: meeting-ai-secret

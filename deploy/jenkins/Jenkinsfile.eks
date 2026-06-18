@@ -1,0 +1,29 @@
+pipeline {
+  agent any
+
+  parameters {
+    string(name: "REGISTRY", defaultValue: "123456789012.dkr.ecr.us-east-1.amazonaws.com", description: "Container registry")
+    string(name: "IMAGE_TAG", defaultValue: "latest", description: "Image tag")
+  }
+
+  stages {
+    stage("Checkout") {
+      steps {
+        checkout scm
+      }
+    }
+
+    stage("Build And Push") {
+      steps {
+        sh "chmod +x deploy/k8s/scripts/*.sh"
+        sh "./deploy/k8s/scripts/build-and-push.sh ${params.REGISTRY} ${params.IMAGE_TAG}"
+      }
+    }
+
+    stage("Deploy") {
+      steps {
+        sh "./deploy/k8s/scripts/deploy.sh ${params.REGISTRY} ${params.IMAGE_TAG}"
+      }
+    }
+  }
+}
