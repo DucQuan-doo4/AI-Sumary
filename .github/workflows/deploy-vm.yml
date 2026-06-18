@@ -1,0 +1,56 @@
+name: Deploy Docker Compose VM
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-vm
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: Deploy to VM
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure SSH
+        run: |
+          mkdir -p ~/.ssh
+          printf "%s" "${{ secrets.VM_SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "${{ secrets.VM_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Upload production env
+        run: |
+          printf "%s" "${{ secrets.ENV_PROD_CONTENT }}" > .env.prod
+          scp -i ~/.ssh/deploy_key .env.prod "${{ secrets.VM_USER }}@${{ secrets.VM_HOST }}:/tmp/meeting-ai.env.prod"
+
+      - name: Deploy on VM
+        run: |
+          ssh -i ~/.ssh/deploy_key "${{ secrets.VM_USER }}@${{ secrets.VM_HOST }}" << 'EOF'
+          set -eu
+
+          APP_DIR="${HOME}/meeting-ai"
+          REPO_URL="https://github.com/DucQuan-doo4/AI-Sumary.git"
+
+          if [ ! -d "$APP_DIR/.git" ]; then
+            rm -rf "$APP_DIR"
+            git clone "$REPO_URL" "$APP_DIR"
+          fi
+
+          cd "$APP_DIR"
+          git fetch origin main
+          git reset --hard origin/main
+
+          mv /tmp/meeting-ai.env.prod "$APP_DIR/deploy/docker/.env.prod"
+          chmod +x "$APP_DIR"/deploy/docker/scripts/*.sh
+
+          cd "$APP_DIR/deploy/docker"
+          ./scripts/deploy.sh
+          EOF

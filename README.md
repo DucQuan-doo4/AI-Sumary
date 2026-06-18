@@ -154,6 +154,7 @@ For real VM or Kubernetes deployment, see:
 DEPLOYMENT.md
 deploy/docker/README.md
 deploy/k8s/README.md
+GITHUB_ACTIONS_DEPLOY.md
 ```
 
 ## Database Migration
