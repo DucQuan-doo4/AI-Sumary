@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from app.auth.dependencies import get_current_user
 from app.auth.security import create_access_token, get_password_hash, verify_password
 from app.database import get_db
-from app.users.models import User
+from app.users.models import User, UserRole
 from app.users.schemas import TokenResponse, UserLogin, UserRegister, UserResponse
 
 
@@ -13,6 +13,12 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 def register(payload: UserRegister, db: Session = Depends(get_db)):
+    if payload.role != UserRole.MEMBER:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Public registration is only available for MEMBER accounts",
+        )
+
     existing_user = db.query(User).filter(User.email == payload.email).first()
     if existing_user:
         raise HTTPException(

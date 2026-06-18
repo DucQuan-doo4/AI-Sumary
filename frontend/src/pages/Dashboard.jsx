@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
 import axiosClient from "../api/axiosClient.js";
 import TaskTable from "../components/TaskTable.jsx";
@@ -43,12 +43,12 @@ export default function Dashboard() {
   }, []);
 
   const cards = [
-    ["Meetings", overview?.total_meetings],
-    ["Tasks", overview?.total_tasks],
-    ["Todo", overview?.todo_tasks],
-    ["In progress", overview?.in_progress_tasks],
-    ["Done", overview?.done_tasks],
-    ["Overdue", overview?.overdue_tasks],
+    ["Meetings", overview?.total_meetings, "text-slate-900"],
+    ["Tasks", overview?.total_tasks, "text-slate-900"],
+    ["Todo", overview?.todo_tasks, "text-slate-900"],
+    ["In progress", overview?.in_progress_tasks, "text-blue-600"],
+    ["Done", overview?.done_tasks, "text-emerald-600"],
+    ["Overdue", overview?.overdue_tasks, "text-rose-600"],
   ];
 
   return (
@@ -62,15 +62,15 @@ export default function Dashboard() {
       {error && <div className="rounded-md bg-rose-50 p-3 text-sm text-rose-700">{error}</div>}
       {loading && <div className="rounded-lg border border-slate-200 bg-white p-4 text-sm text-slate-500">Loading dashboard...</div>}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-6">
-        {cards.map(([label, value]) => (
+        {cards.map(([label, value, color]) => (
           <div key={label} className="rounded-lg border border-slate-200 bg-white p-4">
             <p className="text-xs uppercase text-slate-500">{label}</p>
-            <p className="mt-2 text-2xl font-semibold text-slate-900">{value ?? "-"}</p>
+            <p className={`mt-2 text-2xl font-semibold ${color}`}>{value ?? "-"}</p>
           </div>
         ))}
       </div>
       <div className="grid gap-4 lg:grid-cols-2">
-        <ChartCard title="Tasks by status" data={statusData} xKey="status" />
+        <ChartCard title="Tasks by status" data={statusData} xKey="status" colorByStatus />
         <ChartCard title="Tasks by user" data={userData} xKey="name" />
       </div>
       <section>
@@ -90,7 +90,14 @@ function Field({ label, value, onChange }) {
   );
 }
 
-function ChartCard({ title, data, xKey }) {
+const statusColors = {
+  DONE: "#16a34a",
+  IN_PROGRESS: "#2563eb",
+  TODO: "#64748b",
+  CANCELLED: "#e11d48",
+};
+
+function ChartCard({ title, data, xKey, colorByStatus = false }) {
   return (
     <div className="rounded-lg border border-slate-200 bg-white p-4">
       <h2 className="mb-4 text-sm font-semibold text-slate-900">{title}</h2>
@@ -101,7 +108,11 @@ function ChartCard({ title, data, xKey }) {
             <XAxis dataKey={xKey} tick={{ fontSize: 12 }} />
             <YAxis allowDecimals={false} />
             <Tooltip />
-            <Bar dataKey="count" fill="#0f172a" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="count" fill="#0f172a" radius={[4, 4, 0, 0]}>
+              {colorByStatus && data.map((entry) => (
+                <Cell key={entry.status} fill={statusColors[entry.status] || "#0f172a"} />
+              ))}
+            </Bar>
           </BarChart>
         </ResponsiveContainer>
       </div>

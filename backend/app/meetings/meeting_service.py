@@ -71,6 +71,9 @@ def serialize_meeting(meeting: Meeting) -> dict:
                     "id": participant.user.id,
                     "email": participant.user.email,
                     "full_name": participant.user.full_name,
+                    "avatar_url": participant.user.avatar_url,
+                    "department": participant.user.department,
+                    "room": participant.user.room,
                     "role": participant.user.role,
                 }
             )

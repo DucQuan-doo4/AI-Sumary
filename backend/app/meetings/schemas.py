@@ -40,6 +40,9 @@ class MeetingParticipantUserResponse(BaseModel):
     id: int
     email: str
     full_name: str | None
+    avatar_url: str | None
+    department: str | None
+    room: str | None
     role: UserRole
 
 

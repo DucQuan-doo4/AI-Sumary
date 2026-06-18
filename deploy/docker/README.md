@@ -7,11 +7,13 @@ This folder contains everything needed to deploy the project to one real VM usin
 - `frontend`: production React build served by Nginx on port `80`
 - `backend`: FastAPI running with Uvicorn on internal port `8000`
 - `postgres`: PostgreSQL 16 with persistent Docker volume `postgres_data`
+- uploaded avatars are stored in persistent Docker volume `backend_uploads`
 
 The frontend proxies API requests from:
 
 ```text
 /api/*
+/uploads/*
 ```
 
 to:

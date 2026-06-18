@@ -30,6 +30,8 @@ services:
       - "8000:8000"
     depends_on:
       - postgres
+    volumes:
+      - backend_uploads:/app/uploads
 
   frontend:
     build:
@@ -46,3 +48,4 @@ services:
 
 volumes:
   postgres_data:
+  backend_uploads:

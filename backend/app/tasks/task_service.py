@@ -235,6 +235,11 @@ def update_task(db: Session, task_id: int, payload: TaskUpdate, current_user: Us
 
 def update_task_status(db: Session, task_id: int, task_status: TaskStatus, current_user: User) -> Task:
     task = _get_accessible_task(db, task_id, current_user)
+    if task.status == TaskStatus.DONE and not is_management_user(current_user):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Completed tasks cannot be changed by regular users",
+        )
     if not _can_update_task_status(task, current_user):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,

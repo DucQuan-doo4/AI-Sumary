@@ -19,6 +19,11 @@ class User(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
     email: Mapped[str] = mapped_column(String(255), unique=True, index=True, nullable=False)
     full_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    avatar_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    department: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    room: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    personal_info: Mapped[str | None] = mapped_column(String(2000), nullable=True)
+    education: Mapped[str | None] = mapped_column(String(2000), nullable=True)
     hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
     role: Mapped[UserRole] = mapped_column(
         Enum(UserRole, name="userrole"),

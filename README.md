@@ -200,6 +200,11 @@ Auth:
 Users:
 
 - `GET /users`
+- `POST /users` ADMIN only
+- `GET /users/me/profile`
+- `PATCH /users/me/avatar`
+- `GET /users/{id}/profile`
+- `PATCH /users/{id}/profile` ADMIN only
 
 Meetings:
 
@@ -253,6 +258,11 @@ Notifications:
 
 ## Collaboration And Permissions
 
+Registration:
+
+- Public registration only creates `MEMBER` accounts.
+- `ADMIN` creates `MANAGER`, `MEMBER`, or `ADMIN` accounts from User Management.
+
 Meeting visibility:
 
 - `ADMIN` and `MANAGER` can see all meetings.
@@ -271,11 +281,18 @@ Task actions:
 - `MANAGER` can delete `DONE` or `CANCELLED` tasks.
 - Task creators can delete their own `DONE` or `CANCELLED` tasks.
 - Assignees can update their own task status.
+- Once a task is `DONE`, regular users cannot change its status again.
 
 Classification:
 
 - Meetings support `category` and `tags`.
 - Meetings, tasks, and dashboard APIs can be filtered by `category` and `tag`.
+
+Profiles:
+
+- Users can view their profile and upload their own avatar.
+- `ADMIN` can edit user role, department, room, personal information, education, and active status.
+- Uploaded avatars are served from `/uploads` and persisted in the Docker volume `backend_uploads`.
 
 ## Mock AI
 

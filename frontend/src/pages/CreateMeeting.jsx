@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import axiosClient from "../api/axiosClient.js";
+import UserAvatar from "../components/UserAvatar.jsx";
 
 export default function CreateMeeting() {
   const navigate = useNavigate();
@@ -15,8 +16,24 @@ export default function CreateMeeting() {
     participant_user_ids: [],
   });
   const [users, setUsers] = useState([]);
+  const [participantSearch, setParticipantSearch] = useState("");
+  const [participantPage, setParticipantPage] = useState(1);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const pageSize = 5;
+
+  const filteredUsers = useMemo(() => {
+    const keyword = participantSearch.trim().toLowerCase();
+    if (!keyword) return users;
+    return users.filter((user) =>
+      [user.full_name, user.email, user.department, user.room]
+        .filter(Boolean)
+        .some((value) => value.toLowerCase().includes(keyword)),
+    );
+  }, [participantSearch, users]);
+
+  const totalParticipantPages = Math.max(1, Math.ceil(filteredUsers.length / pageSize));
+  const visibleUsers = filteredUsers.slice((participantPage - 1) * pageSize, participantPage * pageSize);
 
   useEffect(() => {
     axiosClient.get("/users")
@@ -34,6 +51,11 @@ export default function CreateMeeting() {
           : [...current.participant_user_ids, userId],
       };
     });
+  };
+
+  const changeSearch = (value) => {
+    setParticipantSearch(value);
+    setParticipantPage(1);
   };
 
   const submit = async (event) => {
@@ -72,25 +94,81 @@ export default function CreateMeeting() {
         <Field label="Meeting date" type="datetime-local" value={form.meeting_date} onChange={(value) => setForm({ ...form, meeting_date: value })} />
         <Field label="Category" value={form.category} onChange={(value) => setForm({ ...form, category: value })} />
         <Field label="Tags" value={form.tags} onChange={(value) => setForm({ ...form, tags: value })} />
-        <div>
-          <p className="text-sm font-medium text-slate-700">Participants</p>
-          <div className="mt-2 grid gap-2 sm:grid-cols-2">
-            {users.map((user) => (
-              <label key={user.id} className="flex items-start gap-2 rounded-md border border-slate-200 p-3 text-sm">
-                <input
-                  type="checkbox"
-                  className="mt-1"
-                  checked={form.participant_user_ids.includes(user.id)}
-                  onChange={() => toggleParticipant(user.id)}
-                />
-                <span>
-                  <span className="block font-medium text-slate-900">{user.full_name || user.email}</span>
-                  <span className="text-xs text-slate-500">{user.email} · {user.role}</span>
-                </span>
-              </label>
-            ))}
+        <div className="rounded-lg border border-slate-200 p-3">
+          <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
+            <label className="flex-1 text-sm font-medium text-slate-700">
+              Participants
+              <input
+                className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2"
+                placeholder="Search by name, email, department, room"
+                value={participantSearch}
+                onChange={(event) => changeSearch(event.target.value)}
+              />
+            </label>
+            <p className="text-xs text-slate-500">{form.participant_user_ids.length} selected</p>
           </div>
-          {!users.length && <p className="mt-2 text-sm text-slate-500">No users available.</p>}
+          <div className="mt-3 grid gap-2">
+            {visibleUsers.map((user) => {
+              const selected = form.participant_user_ids.includes(user.id);
+              return (
+                <button
+                  key={user.id}
+                  type="button"
+                  onClick={() => toggleParticipant(user.id)}
+                  className={`flex items-center gap-3 rounded-md border p-3 text-left transition ${
+                    selected
+                      ? "border-slate-900 bg-slate-100 shadow-sm"
+                      : "border-slate-200 bg-white hover:border-slate-400"
+                  }`}
+                >
+                  <UserAvatar user={user} />
+                  <span className="min-w-0 flex-1">
+                    <span className={`block truncate text-sm ${selected ? "font-semibold text-slate-950" : "font-medium text-slate-900"}`}>
+                      {user.full_name || user.email}
+                    </span>
+                    <span className="block truncate text-xs text-slate-500">{user.email}</span>
+                    <span className="block text-xs text-slate-400">{user.department || "-"} · {user.room || "-"}</span>
+                  </span>
+                  <span className={`rounded-full px-2 py-1 text-xs font-semibold ${selected ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-500"}`}>
+                    {selected ? "Selected" : "Select"}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+          <div className="mt-3 flex items-center justify-between">
+            <button
+              type="button"
+              disabled={participantPage <= 1}
+              onClick={() => setParticipantPage((page) => Math.max(1, page - 1))}
+              className="rounded-md border border-slate-300 px-3 py-2 text-xs font-medium disabled:opacity-50"
+            >
+              Previous
+            </button>
+            <div className="flex flex-wrap justify-center gap-1">
+              {Array.from({ length: totalParticipantPages }, (_, index) => index + 1).map((page) => (
+                <button
+                  key={page}
+                  type="button"
+                  onClick={() => setParticipantPage(page)}
+                  className={`h-8 min-w-8 rounded-md px-2 text-xs font-semibold ${
+                    page === participantPage ? "bg-slate-900 text-white" : "border border-slate-300 text-slate-600 hover:bg-slate-50"
+                  }`}
+                >
+                  {page}
+                </button>
+              ))}
+            </div>
+            <button
+              type="button"
+              disabled={participantPage >= totalParticipantPages}
+              onClick={() => setParticipantPage((page) => Math.min(totalParticipantPages, page + 1))}
+              className="rounded-md border border-slate-300 px-3 py-2 text-xs font-medium disabled:opacity-50"
+            >
+              Next
+            </button>
+          </div>
+          {!visibleUsers.length && <p className="mt-2 text-sm text-slate-500">No users found.</p>}
         </div>
         <button disabled={loading} className="rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-700 disabled:opacity-60">
           {loading ? "Creating..." : "Create"}

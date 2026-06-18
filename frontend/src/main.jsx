@@ -15,6 +15,7 @@ import TaskList from "./pages/TaskList.jsx";
 import TaskDetail from "./pages/TaskDetail.jsx";
 import UserManagement from "./pages/UserManagement.jsx";
 import Notifications from "./pages/Notifications.jsx";
+import Profile from "./pages/Profile.jsx";
 
 const router = createBrowserRouter([
   { path: "/", element: <Navigate to="/dashboard" replace /> },
@@ -33,6 +34,7 @@ const router = createBrowserRouter([
           { path: "/tasks", element: <TaskList /> },
           { path: "/tasks/:id", element: <TaskDetail /> },
           { path: "/notifications", element: <Notifications /> },
+          { path: "/profile", element: <Profile /> },
           { path: "/users", element: <UserManagement /> },
         ],
       },

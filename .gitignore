@@ -24,6 +24,8 @@ work/
 outputs/
 
 postgres_data/
+backend/uploads/
+uploads/
 
 .DS_Store
 Thumbs.db

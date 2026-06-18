@@ -5,6 +5,7 @@ const items = [
   { to: "/meetings", label: "Meetings" },
   { to: "/tasks", label: "Tasks" },
   { to: "/notifications", label: "Notifications" },
+  { to: "/profile", label: "Profile" },
   { to: "/users", label: "Users" },
 ];
 

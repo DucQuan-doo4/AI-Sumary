@@ -6,6 +6,7 @@ import StatusBadge from "../components/StatusBadge.jsx";
 
 export default function TaskDetail() {
   const { id } = useParams();
+  const currentUser = JSON.parse(localStorage.getItem("current_user") || "null");
   const [task, setTask] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -35,6 +36,7 @@ export default function TaskDetail() {
 
   if (loading && !task) return <p className="text-sm text-slate-500">Loading task...</p>;
   if (!task) return <div className="rounded-md bg-rose-50 p-3 text-sm text-rose-700">{error || "Task not found"}</div>;
+  const lockedDone = task.status === "DONE" && !["ADMIN", "MANAGER"].includes(currentUser?.role);
 
   return (
     <div className="max-w-3xl space-y-4">
@@ -60,9 +62,10 @@ export default function TaskDetail() {
       </section>
       <section className="rounded-lg border border-slate-200 bg-white p-4">
         <h2 className="text-sm font-semibold text-slate-900">Update status</h2>
+        {lockedDone && <p className="mt-2 text-sm text-slate-500">This task is completed and can no longer be changed by regular users.</p>}
         <div className="mt-3 flex flex-wrap gap-2">
           {["TODO", "IN_PROGRESS", "DONE", "CANCELLED"].map((status) => (
-            <button key={status} onClick={() => updateStatus(status)} className="rounded-md border border-slate-300 px-3 py-2 text-sm font-medium hover:bg-slate-50">
+            <button key={status} disabled={lockedDone} onClick={() => updateStatus(status)} className="rounded-md border border-slate-300 px-3 py-2 text-sm font-medium hover:bg-slate-50 disabled:opacity-50">
               {status}
             </button>
           ))}

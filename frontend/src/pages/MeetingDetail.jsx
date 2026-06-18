@@ -4,6 +4,7 @@ import { useParams } from "react-router-dom";
 import axiosClient from "../api/axiosClient.js";
 import StatusBadge from "../components/StatusBadge.jsx";
 import TaskTable from "../components/TaskTable.jsx";
+import UserAvatar from "../components/UserAvatar.jsx";
 
 const priorities = ["LOW", "MEDIUM", "HIGH"];
 
@@ -131,8 +132,9 @@ export default function MeetingDetail() {
           <p className="text-xs uppercase text-slate-500">Participants</p>
           <div className="mt-2 flex flex-wrap gap-2">
             {meeting.participants?.map((participant) => (
-              <span key={participant.id} className="rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-700">
-                {participant.full_name || participant.email}
+              <span key={participant.id} className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-700">
+                <UserAvatar user={participant} size="small" />
+                <span>{participant.full_name || participant.email}</span>
               </span>
             ))}
           </div>

@@ -9,6 +9,10 @@ export default function TaskTable({ tasks, onStatusChange, onDelete }) {
   const currentUser = JSON.parse(localStorage.getItem("current_user") || "null");
   const isAdmin = currentUser?.role === "ADMIN";
   const isManager = currentUser?.role === "MANAGER";
+  const canChangeStatus = (task) => {
+    if (isAdmin || isManager) return true;
+    return task.status !== "DONE";
+  };
   const canDeleteTask = (task) => {
     if (isAdmin) return true;
     const finished = ["DONE", "CANCELLED"].includes(task.status);
@@ -56,7 +60,7 @@ export default function TaskTable({ tasks, onStatusChange, onDelete }) {
               <td className="px-4 py-3 text-slate-600">{task.deadline || "No deadline"}</td>
               <td className="px-4 py-3"><StatusBadge value={task.priority} /></td>
               <td className="px-4 py-3">
-                {onStatusChange ? (
+                {onStatusChange && canChangeStatus(task) ? (
                   <select
                     className="rounded-md border border-slate-300 px-2 py-1"
                     value={task.status}
