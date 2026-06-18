@@ -5,15 +5,17 @@ const items = [
   { to: "/meetings", label: "Meetings" },
   { to: "/tasks", label: "Tasks" },
   { to: "/notifications", label: "Notifications" },
-  { to: "/profile", label: "Profile" },
-  { to: "/users", label: "Users" },
+  { to: "/users", label: "Users", adminOnly: true },
 ];
 
 export default function Sidebar() {
+  const user = JSON.parse(localStorage.getItem("current_user") || "null");
+  const visibleItems = items.filter((item) => !item.adminOnly || user?.role === "ADMIN");
+
   return (
     <aside className="border-b border-slate-200 bg-white md:min-h-screen md:w-64 md:border-b-0 md:border-r">
       <nav className="flex gap-2 overflow-x-auto p-3 md:flex-col md:p-4">
-        {items.map((item) => (
+        {visibleItems.map((item) => (
           <NavLink
             key={item.to}
             to={item.to}

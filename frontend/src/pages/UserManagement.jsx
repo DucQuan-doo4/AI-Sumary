@@ -19,6 +19,7 @@ export default function UserManagement() {
   const [user, setUser] = useState(storedUser);
   const [users, setUsers] = useState([]);
   const [createForm, setCreateForm] = useState(emptyCreateForm);
+  const [showCreateForm, setShowCreateForm] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   const [editForm, setEditForm] = useState({});
   const [error, setError] = useState("");
@@ -58,6 +59,7 @@ export default function UserManagement() {
         education: createForm.education || null,
       });
       setCreateForm(emptyCreateForm);
+      setShowCreateForm(false);
       setSuccess("Account created.");
       await load();
     } catch (err) {
@@ -106,22 +108,34 @@ export default function UserManagement() {
       {error && <div className="rounded-md bg-rose-50 p-3 text-sm text-rose-700">{error}</div>}
       {success && <div className="rounded-md bg-emerald-50 p-3 text-sm text-emerald-700">{success}</div>}
 
-      <form onSubmit={createUser} className="rounded-lg border border-slate-200 bg-white p-4">
-        <h2 className="text-lg font-semibold text-slate-900">Create account</h2>
-        <div className="mt-4 grid gap-3 md:grid-cols-3">
-          <Field label="Email" value={createForm.email} onChange={(value) => setCreateForm({ ...createForm, email: value })} />
-          <Field label="Password" type="password" value={createForm.password} onChange={(value) => setCreateForm({ ...createForm, password: value })} />
-          <Select label="Role" value={createForm.role} options={["MEMBER", "MANAGER", "ADMIN"]} onChange={(value) => setCreateForm({ ...createForm, role: value })} />
-          <Field label="Full name" value={createForm.full_name} onChange={(value) => setCreateForm({ ...createForm, full_name: value })} />
-          <Field label="Department" value={createForm.department} onChange={(value) => setCreateForm({ ...createForm, department: value })} />
-          <Field label="Room" value={createForm.room} onChange={(value) => setCreateForm({ ...createForm, room: value })} />
-        </div>
-        <div className="mt-3 grid gap-3 md:grid-cols-2">
-          <TextArea label="Personal information" value={createForm.personal_info} onChange={(value) => setCreateForm({ ...createForm, personal_info: value })} />
-          <TextArea label="Education" value={createForm.education} onChange={(value) => setCreateForm({ ...createForm, education: value })} />
-        </div>
-        <button className="mt-4 rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-700">Create</button>
-      </form>
+      <div className="flex justify-end">
+        <button
+          type="button"
+          onClick={() => setShowCreateForm((visible) => !visible)}
+          className="rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-700"
+        >
+          {showCreateForm ? "Close create account" : "Create account"}
+        </button>
+      </div>
+
+      {showCreateForm && (
+        <form onSubmit={createUser} className="rounded-lg border border-slate-200 bg-white p-4">
+          <h2 className="text-lg font-semibold text-slate-900">Create account</h2>
+          <div className="mt-4 grid gap-3 md:grid-cols-3">
+            <Field label="Email" value={createForm.email} onChange={(value) => setCreateForm({ ...createForm, email: value })} />
+            <Field label="Password" type="password" value={createForm.password} onChange={(value) => setCreateForm({ ...createForm, password: value })} />
+            <Select label="Role" value={createForm.role} options={["MEMBER", "MANAGER", "ADMIN"]} onChange={(value) => setCreateForm({ ...createForm, role: value })} />
+            <Field label="Full name" value={createForm.full_name} onChange={(value) => setCreateForm({ ...createForm, full_name: value })} />
+            <Field label="Department" value={createForm.department} onChange={(value) => setCreateForm({ ...createForm, department: value })} />
+            <Field label="Room" value={createForm.room} onChange={(value) => setCreateForm({ ...createForm, room: value })} />
+          </div>
+          <div className="mt-3 grid gap-3 md:grid-cols-2">
+            <TextArea label="Personal information" value={createForm.personal_info} onChange={(value) => setCreateForm({ ...createForm, personal_info: value })} />
+            <TextArea label="Education" value={createForm.education} onChange={(value) => setCreateForm({ ...createForm, education: value })} />
+          </div>
+          <button className="mt-4 rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-700">Create</button>
+        </form>
+      )}
 
       <div className="rounded-lg border border-slate-200 bg-white p-4">
         <p className="text-sm font-semibold text-slate-900">Users</p>

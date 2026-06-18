@@ -46,9 +46,18 @@ export default function Navbar() {
           <button
             type="button"
             onClick={() => (open ? closeNotifications() : setOpen(true))}
-            className="relative rounded-md border border-slate-300 px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+            className="relative flex h-10 w-10 items-center justify-center rounded-full border border-slate-300 text-slate-700 hover:bg-slate-50"
+            aria-label="Notifications"
           >
-            Alerts
+            <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path
+                d="M15 17H9m10-1.8c-.9-.9-1.4-2.1-1.4-3.4V9.5a5.6 5.6 0 0 0-11.2 0v2.3c0 1.3-.5 2.5-1.4 3.4L4 16h16l-1-0.8ZM13.8 19a2 2 0 0 1-3.6 0"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
             {unread.length > 0 && (
               <span className="absolute -right-2 -top-2 flex h-5 min-w-5 items-center justify-center rounded-full bg-rose-600 px-1 text-xs font-semibold text-white">
                 {unread.length}
@@ -81,7 +90,9 @@ export default function Navbar() {
             </div>
           )}
         </div>
-        <UserAvatar user={user} />
+        <Link to="/profile" aria-label="Open profile" className="rounded-full focus:outline-none focus:ring-2 focus:ring-slate-400">
+          <UserAvatar user={user} />
+        </Link>
         <div className="hidden text-right sm:block">
           <p className="text-sm font-medium text-slate-900">{user?.full_name || user?.email}</p>
           <p className="text-xs text-slate-500">{user?.role}</p>

@@ -5,6 +5,8 @@ import axiosClient from "../api/axiosClient.js";
 import TaskTable from "../components/TaskTable.jsx";
 
 export default function Dashboard() {
+  const currentUser = JSON.parse(localStorage.getItem("current_user") || "null");
+  const isMember = currentUser?.role === "MEMBER";
   const [overview, setOverview] = useState(null);
   const [statusData, setStatusData] = useState([]);
   const [userData, setUserData] = useState([]);
@@ -54,29 +56,35 @@ export default function Dashboard() {
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-semibold text-slate-900">Dashboard</h1>
-      <div className="grid gap-3 rounded-lg border border-slate-200 bg-white p-4 md:grid-cols-3">
-        <Field label="Category" value={filters.category} onChange={(value) => setFilters({ ...filters, category: value })} />
-        <Field label="Tag" value={filters.tag} onChange={(value) => setFilters({ ...filters, tag: value })} />
-        <button onClick={load} className="self-end rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-700">Apply</button>
-      </div>
+      {!isMember && (
+        <div className="grid gap-3 rounded-lg border border-slate-200 bg-white p-4 md:grid-cols-3">
+          <Field label="Category" value={filters.category} onChange={(value) => setFilters({ ...filters, category: value })} />
+          <Field label="Tag" value={filters.tag} onChange={(value) => setFilters({ ...filters, tag: value })} />
+          <button onClick={load} className="self-end rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-700">Apply</button>
+        </div>
+      )}
       {error && <div className="rounded-md bg-rose-50 p-3 text-sm text-rose-700">{error}</div>}
       {loading && <div className="rounded-lg border border-slate-200 bg-white p-4 text-sm text-slate-500">Loading dashboard...</div>}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-6">
-        {cards.map(([label, value, color]) => (
+      <div className={`grid gap-4 sm:grid-cols-2 ${isMember ? "lg:grid-cols-2" : "lg:grid-cols-6"}`}>
+        {(isMember ? [["Meetings", overview?.total_meetings, "text-slate-900"], ["Assigned tasks", overview?.total_tasks, "text-slate-900"]] : cards).map(([label, value, color]) => (
           <div key={label} className="rounded-lg border border-slate-200 bg-white p-4">
             <p className="text-xs uppercase text-slate-500">{label}</p>
             <p className={`mt-2 text-2xl font-semibold ${color}`}>{value ?? "-"}</p>
           </div>
         ))}
       </div>
-      <div className="grid gap-4 lg:grid-cols-2">
-        <ChartCard title="Tasks by status" data={statusData} xKey="status" colorByStatus />
-        <ChartCard title="Tasks by user" data={userData} xKey="name" />
-      </div>
-      <section>
-        <h2 className="mb-3 text-lg font-semibold text-slate-900">Upcoming deadlines</h2>
-        <TaskTable tasks={upcoming} />
-      </section>
+      {!isMember && (
+        <>
+          <div className="grid gap-4 lg:grid-cols-2">
+            <ChartCard title="Tasks by status" data={statusData} xKey="status" colorByStatus />
+            <ChartCard title="Tasks by user" data={userData} xKey="name" />
+          </div>
+          <section>
+            <h2 className="mb-3 text-lg font-semibold text-slate-900">Upcoming deadlines</h2>
+            <TaskTable tasks={upcoming} />
+          </section>
+        </>
+      )}
     </div>
   );
 }
