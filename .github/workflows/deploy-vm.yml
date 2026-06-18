@@ -22,7 +22,11 @@ jobs:
       - name: Configure SSH
         run: |
           mkdir -p ~/.ssh
-          printf "%s" "${{ secrets.VM_SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
+          if [ -n "${{ secrets.VM_SSH_PRIVATE_KEY_B64 }}" ]; then
+            printf "%s" "${{ secrets.VM_SSH_PRIVATE_KEY_B64 }}" | base64 -d > ~/.ssh/deploy_key
+          else
+            printf "%s" "${{ secrets.VM_SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
+          fi
           chmod 600 ~/.ssh/deploy_key
           ssh-keyscan -H "${{ secrets.VM_HOST }}" >> ~/.ssh/known_hosts
 
