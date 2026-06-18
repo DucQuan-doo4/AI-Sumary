@@ -3,26 +3,37 @@ from datetime import date, timedelta
 from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
 
+from app.auth.permissions import is_management_user
 from app.meetings.models import Meeting, MeetingParticipant
 from app.tasks.models import Task, TaskStatus
 from app.users.models import User
 
 
 def _accessible_meeting_ids_query(db: Session, current_user: User):
-    return (
-        db.query(Meeting.id)
-        .outerjoin(MeetingParticipant, MeetingParticipant.meeting_id == Meeting.id)
-        .filter(
-            or_(
-                Meeting.created_by == current_user.id,
-                MeetingParticipant.user_id == current_user.id,
-            )
+    query = db.query(Meeting.id)
+    if is_management_user(current_user):
+        return query
+    return query.outerjoin(MeetingParticipant, MeetingParticipant.meeting_id == Meeting.id).filter(
+        or_(
+            Meeting.created_by == current_user.id,
+            MeetingParticipant.user_id == current_user.id,
         )
     )
 
 
-def _accessible_tasks_query(db: Session, current_user: User):
-    return db.query(Task).filter(Task.meeting_id.in_(_accessible_meeting_ids_query(db, current_user)))
+def _apply_meeting_filters(query, category: str | None = None, tag: str | None = None):
+    if category or tag:
+        query = query.join(Meeting, Meeting.id == Task.meeting_id)
+    if category:
+        query = query.filter(Meeting.category == category)
+    if tag:
+        query = query.filter(Meeting.tags.ilike(f'%"{tag}"%'))
+    return query
+
+
+def _accessible_tasks_query(db: Session, current_user: User, category: str | None = None, tag: str | None = None):
+    query = db.query(Task).filter(Task.meeting_id.in_(_accessible_meeting_ids_query(db, current_user)))
+    return _apply_meeting_filters(query, category, tag)
 
 
 def _overdue_filter():
@@ -32,9 +43,13 @@ def _overdue_filter():
     )
 
 
-def get_overview(db: Session, current_user: User) -> dict:
+def get_overview(db: Session, current_user: User, category: str | None = None, tag: str | None = None) -> dict:
     meetings_query = db.query(Meeting).filter(Meeting.id.in_(_accessible_meeting_ids_query(db, current_user)))
-    tasks_query = _accessible_tasks_query(db, current_user)
+    if category:
+        meetings_query = meetings_query.filter(Meeting.category == category)
+    if tag:
+        meetings_query = meetings_query.filter(Meeting.tags.ilike(f'%"{tag}"%'))
+    tasks_query = _accessible_tasks_query(db, current_user, category, tag)
 
     return {
         "total_meetings": meetings_query.count(),
@@ -47,7 +62,7 @@ def get_overview(db: Session, current_user: User) -> dict:
     }
 
 
-def get_tasks_by_status(db: Session, current_user: User) -> list[dict]:
+def get_tasks_by_status(db: Session, current_user: User, category: str | None = None, tag: str | None = None) -> list[dict]:
     counts = {
         status: 0
         for status in [
@@ -58,7 +73,7 @@ def get_tasks_by_status(db: Session, current_user: User) -> list[dict]:
         ]
     }
     rows = (
-        _accessible_tasks_query(db, current_user)
+        _accessible_tasks_query(db, current_user, category, tag)
         .with_entities(Task.status, func.count(Task.id))
         .group_by(Task.status)
         .all()
@@ -68,9 +83,9 @@ def get_tasks_by_status(db: Session, current_user: User) -> list[dict]:
     return [{"status": task_status, "count": count} for task_status, count in counts.items()]
 
 
-def get_tasks_by_user(db: Session, current_user: User) -> list[dict]:
+def get_tasks_by_user(db: Session, current_user: User, category: str | None = None, tag: str | None = None) -> list[dict]:
     rows = (
-        _accessible_tasks_query(db, current_user)
+        _accessible_tasks_query(db, current_user, category, tag)
         .with_entities(Task.assignee_id, Task.assignee_name, func.count(Task.id))
         .group_by(Task.assignee_id, Task.assignee_name)
         .order_by(func.count(Task.id).desc())
@@ -82,20 +97,20 @@ def get_tasks_by_user(db: Session, current_user: User) -> list[dict]:
     ]
 
 
-def get_overdue_tasks(db: Session, current_user: User) -> list[Task]:
+def get_overdue_tasks(db: Session, current_user: User, category: str | None = None, tag: str | None = None) -> list[Task]:
     return (
-        _accessible_tasks_query(db, current_user)
+        _accessible_tasks_query(db, current_user, category, tag)
         .filter(*_overdue_filter())
         .order_by(Task.deadline.asc(), Task.created_at.desc())
         .all()
     )
 
 
-def get_upcoming_deadlines(db: Session, current_user: User) -> list[Task]:
+def get_upcoming_deadlines(db: Session, current_user: User, category: str | None = None, tag: str | None = None) -> list[Task]:
     today = date.today()
     next_week = today + timedelta(days=7)
     return (
-        _accessible_tasks_query(db, current_user)
+        _accessible_tasks_query(db, current_user, category, tag)
         .filter(
             Task.deadline >= today,
             Task.deadline <= next_week,

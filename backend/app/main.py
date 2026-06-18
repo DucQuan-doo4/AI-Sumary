@@ -8,6 +8,7 @@ from app.dashboard.dashboard import router as dashboard_router
 from app.meetings.meetings import router as meetings_router
 from app.notifications.notifications import router as notifications_router
 from app.tasks.tasks import router as tasks_router
+from app.users.users import router as users_router
 
 
 settings = get_settings()
@@ -28,6 +29,7 @@ app.include_router(tasks_router)
 app.include_router(ai_router)
 app.include_router(dashboard_router)
 app.include_router(notifications_router)
+app.include_router(users_router)
 
 
 @app.get("/health")

@@ -9,17 +9,23 @@ export default function Dashboard() {
   const [statusData, setStatusData] = useState([]);
   const [userData, setUserData] = useState([]);
   const [upcoming, setUpcoming] = useState([]);
+  const [filters, setFilters] = useState({ category: "", tag: "" });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  useEffect(() => {
+  const load = () => {
     setLoading(true);
     setError("");
+    const params = new URLSearchParams();
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value) params.set(key, value);
+    });
+    const query = params.toString();
     Promise.all([
-      axiosClient.get("/dashboard/overview"),
-      axiosClient.get("/dashboard/tasks-by-status"),
-      axiosClient.get("/dashboard/tasks-by-user"),
-      axiosClient.get("/dashboard/upcoming-deadlines"),
+      axiosClient.get(`/dashboard/overview?${query}`),
+      axiosClient.get(`/dashboard/tasks-by-status?${query}`),
+      axiosClient.get(`/dashboard/tasks-by-user?${query}`),
+      axiosClient.get(`/dashboard/upcoming-deadlines?${query}`),
     ]).then(([overviewRes, statusRes, userRes, upcomingRes]) => {
       setOverview(overviewRes.data);
       setStatusData(statusRes.data);
@@ -30,6 +36,10 @@ export default function Dashboard() {
     }).finally(() => {
       setLoading(false);
     });
+  };
+
+  useEffect(() => {
+    load();
   }, []);
 
   const cards = [
@@ -44,6 +54,11 @@ export default function Dashboard() {
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-semibold text-slate-900">Dashboard</h1>
+      <div className="grid gap-3 rounded-lg border border-slate-200 bg-white p-4 md:grid-cols-3">
+        <Field label="Category" value={filters.category} onChange={(value) => setFilters({ ...filters, category: value })} />
+        <Field label="Tag" value={filters.tag} onChange={(value) => setFilters({ ...filters, tag: value })} />
+        <button onClick={load} className="self-end rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-700">Apply</button>
+      </div>
       {error && <div className="rounded-md bg-rose-50 p-3 text-sm text-rose-700">{error}</div>}
       {loading && <div className="rounded-lg border border-slate-200 bg-white p-4 text-sm text-slate-500">Loading dashboard...</div>}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-6">
@@ -63,6 +78,15 @@ export default function Dashboard() {
         <TaskTable tasks={upcoming} />
       </section>
     </div>
+  );
+}
+
+function Field({ label, value, onChange }) {
+  return (
+    <label className="text-sm font-medium text-slate-700">
+      {label}
+      <input className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2" value={value} onChange={(e) => onChange(e.target.value)} />
+    </label>
   );
 }
 

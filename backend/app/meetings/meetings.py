@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.orm import Session
 
 from app.auth.dependencies import get_current_user
@@ -23,10 +23,13 @@ def create_meeting(
 
 @router.get("", response_model=list[MeetingResponse])
 def list_meetings(
+    category: str | None = None,
+    tag: str | None = None,
+    search: str | None = Query(default=None, min_length=1),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    meetings = meeting_service.get_meetings(db, current_user)
+    meetings = meeting_service.get_meetings(db, current_user, category=category, tag=tag, search=search)
     return [meeting_service.serialize_meeting(meeting) for meeting in meetings]
 
 

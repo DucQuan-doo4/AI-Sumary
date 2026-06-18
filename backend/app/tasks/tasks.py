@@ -48,6 +48,8 @@ def list_tasks(
     assignee_id: int | None = None,
     meeting_id: int | None = None,
     overdue: bool | None = None,
+    category: str | None = None,
+    tag: str | None = None,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
@@ -59,6 +61,8 @@ def list_tasks(
         assignee_id=assignee_id,
         meeting_id=meeting_id,
         overdue=overdue,
+        category=category,
+        tag=tag,
     )
 
 

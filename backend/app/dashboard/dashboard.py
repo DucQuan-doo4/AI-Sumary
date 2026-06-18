@@ -18,39 +18,49 @@ router = APIRouter(prefix="/dashboard", tags=["dashboard"])
 
 @router.get("/overview", response_model=DashboardOverview)
 def dashboard_overview(
+    category: str | None = None,
+    tag: str | None = None,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    return dashboard_service.get_overview(db, current_user)
+    return dashboard_service.get_overview(db, current_user, category=category, tag=tag)
 
 
 @router.get("/tasks-by-status", response_model=list[TasksByStatusItem])
 def dashboard_tasks_by_status(
+    category: str | None = None,
+    tag: str | None = None,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    return dashboard_service.get_tasks_by_status(db, current_user)
+    return dashboard_service.get_tasks_by_status(db, current_user, category=category, tag=tag)
 
 
 @router.get("/tasks-by-user", response_model=list[TasksByUserItem])
 def dashboard_tasks_by_user(
+    category: str | None = None,
+    tag: str | None = None,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    return dashboard_service.get_tasks_by_user(db, current_user)
+    return dashboard_service.get_tasks_by_user(db, current_user, category=category, tag=tag)
 
 
 @router.get("/overdue-tasks", response_model=list[DashboardTaskItem])
 def dashboard_overdue_tasks(
+    category: str | None = None,
+    tag: str | None = None,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    return dashboard_service.get_overdue_tasks(db, current_user)
+    return dashboard_service.get_overdue_tasks(db, current_user, category=category, tag=tag)
 
 
 @router.get("/upcoming-deadlines", response_model=list[DashboardTaskItem])
 def dashboard_upcoming_deadlines(
+    category: str | None = None,
+    tag: str | None = None,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    return dashboard_service.get_upcoming_deadlines(db, current_user)
+    return dashboard_service.get_upcoming_deadlines(db, current_user, category=category, tag=tag)

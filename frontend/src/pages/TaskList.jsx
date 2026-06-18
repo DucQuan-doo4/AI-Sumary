@@ -5,7 +5,7 @@ import TaskTable from "../components/TaskTable.jsx";
 
 export default function TaskList() {
   const [tasks, setTasks] = useState([]);
-  const [filters, setFilters] = useState({ status: "", priority: "", meeting_id: "", overdue: "" });
+  const [filters, setFilters] = useState({ status: "", priority: "", meeting_id: "", overdue: "", category: "", tag: "" });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -30,14 +30,16 @@ export default function TaskList() {
     <div className="space-y-4">
       <h1 className="text-2xl font-semibold text-slate-900">Tasks</h1>
       {error && <div className="rounded-md bg-rose-50 p-3 text-sm text-rose-700">{error}</div>}
-      <div className="grid gap-3 rounded-lg border border-slate-200 bg-white p-4 md:grid-cols-5">
+      <div className="grid gap-3 rounded-lg border border-slate-200 bg-white p-4 md:grid-cols-7">
         <Select label="Status" value={filters.status} options={["", "TODO", "IN_PROGRESS", "DONE", "CANCELLED"]} onChange={(value) => setFilters({ ...filters, status: value })} />
         <Select label="Priority" value={filters.priority} options={["", "LOW", "MEDIUM", "HIGH"]} onChange={(value) => setFilters({ ...filters, priority: value })} />
         <label className="text-sm font-medium text-slate-700">Meeting ID<input className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2" value={filters.meeting_id} onChange={(e) => setFilters({ ...filters, meeting_id: e.target.value })} /></label>
         <Select label="Overdue" value={filters.overdue} options={["", "true", "false"]} onChange={(value) => setFilters({ ...filters, overdue: value })} />
+        <label className="text-sm font-medium text-slate-700">Category<input className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2" value={filters.category} onChange={(e) => setFilters({ ...filters, category: e.target.value })} /></label>
+        <label className="text-sm font-medium text-slate-700">Tag<input className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2" value={filters.tag} onChange={(e) => setFilters({ ...filters, tag: e.target.value })} /></label>
         <button onClick={load} className="self-end rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-700">Apply</button>
       </div>
-      {loading ? <div className="rounded-lg border border-slate-200 bg-white p-4 text-sm text-slate-500">Loading tasks...</div> : <TaskTable tasks={tasks} />}
+      {loading ? <div className="rounded-lg border border-slate-200 bg-white p-4 text-sm text-slate-500">Loading tasks...</div> : <TaskTable tasks={tasks} onStatusChange={load} onDelete={load} />}
     </div>
   );
 }

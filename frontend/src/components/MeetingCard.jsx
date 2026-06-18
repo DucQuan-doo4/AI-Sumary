@@ -14,6 +14,12 @@ export default function MeetingCard({ meeting }) {
         <span>{meeting.meeting_date ? new Date(meeting.meeting_date).toLocaleDateString() : "No date"}</span>
         <span>{meeting.participant_user_ids?.length || 0} participant(s)</span>
       </div>
+      <div className="mt-3 flex flex-wrap gap-2">
+        {meeting.category && <span className="rounded-full bg-slate-100 px-2 py-1 text-xs text-slate-600">{meeting.category}</span>}
+        {meeting.tags?.slice(0, 3).map((tag) => (
+          <span key={tag} className="rounded-full bg-emerald-50 px-2 py-1 text-xs text-emerald-700">{tag}</span>
+        ))}
+      </div>
     </Link>
   );
 }

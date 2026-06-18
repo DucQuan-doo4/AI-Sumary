@@ -197,10 +197,14 @@ Auth:
 - `POST /auth/login`
 - `GET /auth/me`
 
+Users:
+
+- `GET /users`
+
 Meetings:
 
 - `POST /meetings`
-- `GET /meetings`
+- `GET /meetings?search=&category=&tag=`
 - `GET /meetings/{id}`
 - `PUT /meetings/{id}`
 - `DELETE /meetings/{id}`
@@ -210,7 +214,7 @@ Tasks:
 
 - `POST /tasks`
 - `POST /meetings/{id}/tasks/bulk`
-- `GET /tasks`
+- `GET /tasks?status=&priority=&assignee_id=&meeting_id=&overdue=&category=&tag=`
 - `GET /tasks/{id}`
 - `PUT /tasks/{id}`
 - `PATCH /tasks/{id}/status`
@@ -218,11 +222,11 @@ Tasks:
 
 Dashboard:
 
-- `GET /dashboard/overview`
-- `GET /dashboard/tasks-by-status`
-- `GET /dashboard/tasks-by-user`
-- `GET /dashboard/overdue-tasks`
-- `GET /dashboard/upcoming-deadlines`
+- `GET /dashboard/overview?category=&tag=`
+- `GET /dashboard/tasks-by-status?category=&tag=`
+- `GET /dashboard/tasks-by-user?category=&tag=`
+- `GET /dashboard/overdue-tasks?category=&tag=`
+- `GET /dashboard/upcoming-deadlines?category=&tag=`
 
 Notifications:
 
@@ -234,18 +238,44 @@ Notifications:
 1. User logs in and receives a JWT access token.
 2. Frontend stores the token in `localStorage`.
 3. Axios automatically sends `Authorization: Bearer <token>` on API requests.
-4. User creates a meeting and enters meeting content.
+4. User creates a meeting, selects participants, category, tags, and enters meeting content.
 5. User opens meeting detail and clicks `Analyze with AI`.
 6. Backend analyzes meeting content using mock AI or Vertex AI Gemini.
 7. Backend saves the generated summary to `meetings.summary`.
 8. Backend logs the AI request/response to `ai_logs`.
 9. Frontend displays AI suggested tasks as editable preview items.
-10. User edits the preview tasks.
+10. User edits the preview tasks and assigns them to meeting participants.
 11. User clicks `Confirm Save Tasks`.
 12. Frontend calls `POST /meetings/{id}/tasks/bulk`.
 13. Backend saves confirmed tasks.
 14. If a task has `assignee_id`, backend creates a notification for that user.
 15. Dashboard and notifications update from backend APIs.
+
+## Collaboration And Permissions
+
+Meeting visibility:
+
+- `ADMIN` and `MANAGER` can see all meetings.
+- `MEMBER` can see only meetings they created or meetings where they are a participant.
+- Meeting participants can see the meeting content, summary, and tasks for that meeting.
+
+Task visibility:
+
+- `ADMIN` and `MANAGER` can see all tasks.
+- `MEMBER` can see tasks inside meetings they created or participate in.
+- A task assignee must be one of the meeting participants.
+
+Task actions:
+
+- `ADMIN` can delete any task.
+- `MANAGER` can delete `DONE` or `CANCELLED` tasks.
+- Task creators can delete their own `DONE` or `CANCELLED` tasks.
+- Assignees can update their own task status.
+
+Classification:
+
+- Meetings support `category` and `tags`.
+- Meetings, tasks, and dashboard APIs can be filtered by `category` and `tag`.
 
 ## Mock AI
 
@@ -337,7 +367,7 @@ $meeting = Invoke-RestMethod -Method Post `
   -Uri http://localhost:8000/meetings `
   -Headers $headers `
   -ContentType "application/json" `
-  -Body '{"title":"Marketing Q4","content":"Lan prepares brand assets by 2026-06-25. Hung writes blog posts by 2026-07-10.","participant_user_ids":[1]}'
+  -Body '{"title":"Marketing Q4","content":"Lan prepares brand assets by 2026-06-25. Hung writes blog posts by 2026-07-10.","category":"Marketing","tags":["Q4","Launch"],"participant_user_ids":[1]}'
 ```
 
 Analyze meeting:

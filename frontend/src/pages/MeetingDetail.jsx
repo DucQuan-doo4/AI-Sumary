@@ -11,6 +11,7 @@ export default function MeetingDetail() {
   const { id } = useParams();
   const [meeting, setMeeting] = useState(null);
   const [tasks, setTasks] = useState([]);
+  const [users, setUsers] = useState([]);
   const [analysis, setAnalysis] = useState(null);
   const [previewTasks, setPreviewTasks] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -25,10 +26,12 @@ export default function MeetingDetail() {
     Promise.all([
       axiosClient.get(`/meetings/${id}`),
       axiosClient.get(`/tasks?meeting_id=${id}`),
+      axiosClient.get("/users"),
     ])
-      .then(([meetingRes, tasksRes]) => {
+      .then(([meetingRes, tasksRes, usersRes]) => {
         setMeeting(meetingRes.data);
         setTasks(tasksRes.data);
+        setUsers(usersRes.data);
       })
       .catch((err) => {
         setError(err.response?.data?.detail || "Failed to load meeting");
@@ -75,6 +78,7 @@ export default function MeetingDetail() {
           .map((task) => ({
             title: task.title,
             description: task.description || null,
+            assignee_id: task.assignee_id ? Number(task.assignee_id) : null,
             assignee_name: task.assignee_name || null,
             deadline: task.deadline || null,
             priority: task.priority || "MEDIUM",
@@ -119,6 +123,20 @@ export default function MeetingDetail() {
         <p className="mt-4 whitespace-pre-wrap text-sm text-slate-700">
           {meeting.content || meeting.description || "No content"}
         </p>
+        <div className="mt-4 grid gap-3 text-sm md:grid-cols-2">
+          <Info label="Category" value={meeting.category || "-"} />
+          <Info label="Tags" value={meeting.tags?.length ? meeting.tags.join(", ") : "-"} />
+        </div>
+        <div className="mt-4">
+          <p className="text-xs uppercase text-slate-500">Participants</p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {meeting.participants?.map((participant) => (
+              <span key={participant.id} className="rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-700">
+                {participant.full_name || participant.email}
+              </span>
+            ))}
+          </div>
+        </div>
         {meeting.summary && <div className="mt-4 rounded-md bg-emerald-50 p-3 text-sm text-emerald-800">{meeting.summary}</div>}
       </section>
 
@@ -169,12 +187,24 @@ export default function MeetingDetail() {
                     />
                   </label>
                   <label className="text-sm font-medium text-slate-700">
-                    Assignee name
-                    <input
+                    Assignee
+                    <select
                       className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2"
-                      value={task.assignee_name || ""}
-                      onChange={(event) => updatePreviewTask(index, "assignee_name", event.target.value)}
-                    />
+                      value={task.assignee_id || ""}
+                      onChange={(event) => {
+                        const assigneeId = event.target.value ? Number(event.target.value) : null;
+                        const assignee = users.find((user) => user.id === assigneeId);
+                        updatePreviewTask(index, "assignee_id", assigneeId);
+                        updatePreviewTask(index, "assignee_name", assignee?.full_name || assignee?.email || null);
+                      }}
+                    >
+                      <option value="">Unassigned</option>
+                      {meeting.participants?.map((participant) => (
+                        <option key={participant.id} value={participant.id}>
+                          {participant.full_name || participant.email}
+                        </option>
+                      ))}
+                    </select>
                   </label>
                   <label className="text-sm font-medium text-slate-700">
                     Deadline
@@ -197,8 +227,17 @@ export default function MeetingDetail() {
 
       <section>
         <h2 className="mb-3 text-lg font-semibold text-slate-900">Tasks</h2>
-        <TaskTable tasks={tasks} />
+        <TaskTable tasks={tasks} onStatusChange={load} onDelete={load} />
       </section>
+    </div>
+  );
+}
+
+function Info({ label, value }) {
+  return (
+    <div className="rounded-md bg-slate-50 p-3">
+      <p className="text-xs uppercase text-slate-500">{label}</p>
+      <p className="mt-1 font-medium text-slate-900">{value}</p>
     </div>
   );
 }
