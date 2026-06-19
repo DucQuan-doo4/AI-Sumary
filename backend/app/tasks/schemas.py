@@ -3,6 +3,7 @@ from datetime import date, datetime
 from pydantic import BaseModel, Field
 
 from app.tasks.models import TaskPriority, TaskSource, TaskStatus
+from app.users.models import UserRole
 
 
 class TaskBase(BaseModel):
@@ -52,6 +53,18 @@ class TaskStatusUpdate(BaseModel):
     status: TaskStatus
 
 
+class TaskUserResponse(BaseModel):
+    id: int
+    email: str
+    full_name: str | None
+    avatar_url: str | None
+    department: str | None
+    room: str | None
+    role: UserRole
+
+    model_config = {"from_attributes": True}
+
+
 class TaskResponse(BaseModel):
     id: int
     meeting_id: int
@@ -59,6 +72,7 @@ class TaskResponse(BaseModel):
     description: str | None
     assignee_id: int | None
     assignee_name: str | None
+    assignee: TaskUserResponse | None
     deadline: date | None
     priority: TaskPriority
     status: TaskStatus

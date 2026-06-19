@@ -2,7 +2,7 @@ from datetime import date
 
 from fastapi import HTTPException, status
 from sqlalchemy import or_
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from app.auth.permissions import is_admin, is_management_user
 from app.meetings.meeting_service import get_meeting_by_id
@@ -99,6 +99,7 @@ def _apply_meeting_filters(query, category: str | None, tag: str | None):
 def _get_accessible_task(db: Session, task_id: int, current_user: User) -> Task:
     task = (
         db.query(Task)
+        .options(selectinload(Task.assignee))
         .filter(
             Task.id == task_id,
             Task.meeting_id.in_(_accessible_meeting_ids_query(db, current_user)),
@@ -189,7 +190,7 @@ def get_tasks(
     category: str | None = None,
     tag: str | None = None,
 ) -> list[Task]:
-    query = db.query(Task).filter(Task.meeting_id.in_(_accessible_meeting_ids_query(db, current_user)))
+    query = db.query(Task).options(selectinload(Task.assignee)).filter(Task.meeting_id.in_(_accessible_meeting_ids_query(db, current_user)))
     query = _apply_meeting_filters(query, category, tag)
 
     if task_status is not None:

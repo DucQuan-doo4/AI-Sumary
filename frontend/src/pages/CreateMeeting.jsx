@@ -100,7 +100,7 @@ export default function CreateMeeting() {
           Meeting content
           <textarea className="mt-1 min-h-36 w-full rounded-md border border-slate-300 px-3 py-2" value={form.content} onChange={(e) => setForm({ ...form, content: e.target.value })} />
         </label>
-        <Field label="Meeting date" type="datetime-local" value={form.meeting_date} onChange={(value) => setForm({ ...form, meeting_date: value })} />
+        <Field label="Schedule meeting date/time" type="datetime-local" value={form.meeting_date} onChange={(value) => setForm({ ...form, meeting_date: value })} />
         <Field label="Category" value={form.category} onChange={(value) => setForm({ ...form, category: value })} />
         <Field label="Tags" value={form.tags} onChange={(value) => setForm({ ...form, tags: value })} />
         <div className="rounded-lg border border-slate-200 p-3">

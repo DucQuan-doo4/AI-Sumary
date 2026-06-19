@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 
 import axiosClient from "../api/axiosClient.js";
 import StatusBadge from "../components/StatusBadge.jsx";
+import UserAvatar from "../components/UserAvatar.jsx";
 
 export default function TaskDetail() {
   const { id } = useParams();
@@ -54,7 +55,8 @@ export default function TaskDetail() {
         </div>
         <p className="mt-4 whitespace-pre-wrap text-sm text-slate-700">{task.description || "No description"}</p>
         <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
-          <Info label="Assignee" value={task.assignee_name || task.assignee_id || "Unassigned"} />
+          <Info label="Assignee" value={<AssigneeInfo task={task} />} />
+          <Info label="Assigned date" value={new Date(task.created_at).toLocaleString()} />
           <Info label="Deadline" value={task.deadline || "No deadline"} />
           <Info label="Source" value={task.source} />
           <Info label="Created by" value={`User ${task.created_by}`} />
@@ -81,5 +83,22 @@ function Info({ label, value }) {
       <dt className="text-xs uppercase text-slate-500">{label}</dt>
       <dd className="mt-1 font-medium text-slate-900">{value}</dd>
     </div>
+  );
+}
+
+function AssigneeInfo({ task }) {
+  const assignee = task.assignee;
+  if (!assignee) return task.assignee_name || task.assignee_id || "Unassigned";
+
+  return (
+    <span className="group relative inline-flex items-center gap-2">
+      <UserAvatar user={assignee} size="small" />
+      <span>{assignee.full_name || assignee.email}</span>
+      <span className="pointer-events-none absolute left-1/2 top-full z-20 mt-2 hidden w-56 -translate-x-1/2 rounded-lg border border-slate-200 bg-white p-3 text-xs shadow-lg group-hover:block">
+        <span className="block font-semibold text-slate-900">{assignee.full_name || assignee.email}</span>
+        <span className="mt-1 block text-slate-500">{assignee.email}</span>
+        <span className="mt-2 block text-slate-600">{assignee.department || "No department"} · {assignee.room || "No room"}</span>
+      </span>
+    </span>
   );
 }

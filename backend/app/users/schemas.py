@@ -28,6 +28,11 @@ class UserLogin(BaseModel):
     password: str
 
 
+class PasswordChange(BaseModel):
+    current_password: str
+    new_password: str = Field(min_length=6, max_length=128)
+
+
 class UserProfileUpdate(BaseModel):
     full_name: str | None = Field(default=None, max_length=255)
     role: UserRole | None = None

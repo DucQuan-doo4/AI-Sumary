@@ -2,7 +2,7 @@ import enum
 from datetime import date, datetime
 
 from sqlalchemy import Date, DateTime, Enum, ForeignKey, Integer, String, Text
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
 
@@ -58,3 +58,6 @@ class Task(Base):
         default=datetime.utcnow,
         onupdate=datetime.utcnow,
     )
+
+    assignee = relationship("User", foreign_keys=[assignee_id])
+    creator = relationship("User", foreign_keys=[created_by])

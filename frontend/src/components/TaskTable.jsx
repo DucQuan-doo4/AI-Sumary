@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 
 import axiosClient from "../api/axiosClient.js";
 import StatusBadge from "./StatusBadge.jsx";
+import UserAvatar from "./UserAvatar.jsx";
 
 const statuses = ["TODO", "IN_PROGRESS", "DONE", "CANCELLED"];
 
@@ -41,7 +42,7 @@ export default function TaskTable({ tasks, onStatusChange, onDelete }) {
           <tr>
             <th className="px-4 py-3">Task</th>
             <th className="px-4 py-3">Assignee</th>
-            <th className="px-4 py-3">Deadline</th>
+            <th className="px-4 py-3">Assigned / deadline</th>
             <th className="px-4 py-3">Priority</th>
             <th className="px-4 py-3">Status</th>
             <th className="px-4 py-3">Action</th>
@@ -56,13 +57,16 @@ export default function TaskTable({ tasks, onStatusChange, onDelete }) {
                 </Link>
                 <p className="text-xs text-slate-500">Meeting #{task.meeting_id}</p>
               </td>
-              <td className="px-4 py-3 text-slate-600">{task.assignee_name || task.assignee_id || "Unassigned"}</td>
-              <td className="px-4 py-3 text-slate-600">{task.deadline || "No deadline"}</td>
+              <td className="px-4 py-3 text-slate-600"><AssigneeCell task={task} /></td>
+              <td className="px-4 py-3 text-slate-600">
+                <p className="text-xs text-slate-500">Assigned {formatDate(task.created_at)}</p>
+                <p className="mt-1 font-medium text-slate-800">{task.deadline || "No deadline"}</p>
+              </td>
               <td className="px-4 py-3"><StatusBadge value={task.priority} /></td>
               <td className="px-4 py-3">
                 {onStatusChange && canChangeStatus(task) ? (
                   <select
-                    className="rounded-md border border-slate-300 px-2 py-1"
+                    className={`rounded-full border px-3 py-1 text-xs font-semibold ${statusSelectClass(task.status)}`}
                     value={task.status}
                     onChange={(event) => updateStatus(task.id, event.target.value)}
                   >
@@ -89,4 +93,37 @@ export default function TaskTable({ tasks, onStatusChange, onDelete }) {
       </table>
     </div>
   );
+}
+
+function AssigneeCell({ task }) {
+  const assignee = task.assignee;
+  if (!assignee) return <span>{task.assignee_name || "Unassigned"}</span>;
+
+  return (
+    <div className="group relative inline-flex items-center gap-2">
+      <UserAvatar user={assignee} size="small" />
+      <span className="font-medium text-slate-800">{assignee.full_name || assignee.email}</span>
+      <div className="pointer-events-none absolute left-1/2 top-full z-20 mt-2 hidden w-56 -translate-x-1/2 rounded-lg border border-slate-200 bg-white p-3 text-xs shadow-lg group-hover:block">
+        <p className="font-semibold text-slate-900">{assignee.full_name || assignee.email}</p>
+        <p className="mt-1 text-slate-500">{assignee.email}</p>
+        <p className="mt-2 text-slate-600">{assignee.department || "No department"} · {assignee.room || "No room"}</p>
+        <p className="mt-1 text-slate-500">{assignee.role}</p>
+      </div>
+    </div>
+  );
+}
+
+function formatDate(value) {
+  if (!value) return "-";
+  return new Date(value).toLocaleDateString();
+}
+
+function statusSelectClass(status) {
+  const classes = {
+    TODO: "border-slate-200 bg-slate-50 text-slate-700",
+    IN_PROGRESS: "border-blue-200 bg-blue-50 text-blue-700",
+    DONE: "border-emerald-200 bg-emerald-50 text-emerald-700",
+    CANCELLED: "border-rose-200 bg-rose-50 text-rose-700",
+  };
+  return classes[status] || classes.TODO;
 }

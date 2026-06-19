@@ -5,7 +5,7 @@ from app.auth.dependencies import get_current_user
 from app.auth.security import create_access_token, get_password_hash, verify_password
 from app.database import get_db
 from app.users.models import User, UserRole
-from app.users.schemas import TokenResponse, UserLogin, UserRegister, UserResponse
+from app.users.schemas import PasswordChange, TokenResponse, UserLogin, UserRegister, UserResponse
 
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -58,4 +58,21 @@ def login(payload: UserLogin, db: Session = Depends(get_db)):
 
 @router.get("/me", response_model=UserResponse)
 def get_me(current_user: User = Depends(get_current_user)):
+    return current_user
+
+
+@router.patch("/me/password", response_model=UserResponse)
+def change_password(
+    payload: PasswordChange,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    if not verify_password(payload.current_password, current_user.hashed_password):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Current password is incorrect",
+        )
+    current_user.hashed_password = get_password_hash(payload.new_password)
+    db.commit()
+    db.refresh(current_user)
     return current_user

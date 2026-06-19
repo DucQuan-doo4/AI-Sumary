@@ -157,6 +157,19 @@ export default function MeetingDetail() {
               </span>
             ))}
           </div>
+          <div className="mt-3 grid gap-2 md:grid-cols-2">
+            {meeting.participants?.map((participant) => (
+              <div key={`participant-row-${participant.id}`} className="flex items-center gap-3 rounded-md border border-slate-200 bg-white p-3">
+                <UserAvatar user={participant} />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-semibold text-slate-900">{participant.full_name || participant.email}</p>
+                  <p className="truncate text-xs text-slate-500">{participant.email}</p>
+                  <p className="mt-1 text-xs text-slate-500">{participant.department || "No department"} · {participant.room || "No room"}</p>
+                </div>
+                <span className="rounded-full bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-600">{participant.role}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
