@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 from app.ai.models import AiLog
 from app.ai.schemas import AiAnalyzeResponse
 from app.config import get_settings
+from app.auth.permissions import is_management_user
 from app.meetings.meeting_service import get_meeting_by_id
 from app.users.models import User
 
@@ -115,6 +116,11 @@ def analyze_content(content: str, meeting_date: str | None) -> AiAnalyzeResponse
 
 
 def analyze_meeting(db: Session, meeting_id: int, current_user: User) -> AiAnalyzeResponse:
+    if not is_management_user(current_user):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only ADMIN or MANAGER can analyze meetings",
+        )
     meeting = get_meeting_by_id(db, meeting_id, current_user)
     input_text = meeting.content or meeting.description or ""
     if not input_text.strip():

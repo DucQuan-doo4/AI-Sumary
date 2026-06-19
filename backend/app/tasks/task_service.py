@@ -111,6 +111,11 @@ def _get_accessible_task(db: Session, task_id: int, current_user: User) -> Task:
 
 
 def create_task(db: Session, payload: TaskCreate, current_user: User) -> Task:
+    if not is_management_user(current_user):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only ADMIN or MANAGER can create tasks",
+        )
     get_meeting_by_id(db, payload.meeting_id, current_user)
     assignee = _validate_assignee(db, payload.meeting_id, payload.assignee_id)
 
@@ -140,6 +145,11 @@ def create_meeting_tasks_bulk(
     payload: MeetingTaskBulkCreate,
     current_user: User,
 ) -> list[Task]:
+    if not is_management_user(current_user):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only ADMIN or MANAGER can create tasks",
+        )
     get_meeting_by_id(db, meeting_id, current_user)
 
     tasks: list[Task] = []

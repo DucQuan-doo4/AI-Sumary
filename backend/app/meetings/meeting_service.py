@@ -1,4 +1,5 @@
 import json
+from datetime import datetime, timedelta
 
 from fastapi import HTTPException, status
 from sqlalchemy import or_
@@ -7,6 +8,7 @@ from sqlalchemy.orm import Session, selectinload
 from app.auth.permissions import is_management_user
 from app.meetings.models import Meeting, MeetingParticipant
 from app.meetings.schemas import MeetingCreate, MeetingUpdate
+from app.notifications.notification_service import create_meeting_reminder_notifications
 from app.users.models import User
 
 
@@ -62,7 +64,14 @@ def _set_participants(db: Session, meeting: Meeting, participant_user_ids: list[
         meeting.participants.append(MeetingParticipant(user_id=user_id))
 
 
-def serialize_meeting(meeting: Meeting) -> dict:
+def _should_notify_upcoming(meeting: Meeting) -> bool:
+    if meeting.meeting_date is None:
+        return False
+    now = datetime.utcnow()
+    return now <= meeting.meeting_date <= now + timedelta(hours=24)
+
+
+def serialize_meeting(meeting: Meeting, current_user: User | None = None) -> dict:
     participant_users = []
     for participant in meeting.participants:
         if participant.user is not None:
@@ -78,11 +87,12 @@ def serialize_meeting(meeting: Meeting) -> dict:
                 }
             )
 
+    can_view_source_content = current_user is None or is_management_user(current_user)
     return {
         "id": meeting.id,
         "title": meeting.title,
         "description": meeting.description,
-        "content": meeting.content,
+        "content": meeting.content if can_view_source_content else None,
         "summary": meeting.summary,
         "category": meeting.category,
         "tags": _load_tags(meeting.tags),
@@ -96,6 +106,11 @@ def serialize_meeting(meeting: Meeting) -> dict:
 
 
 def create_meeting(db: Session, payload: MeetingCreate, current_user: User) -> Meeting:
+    if not is_management_user(current_user):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only ADMIN or MANAGER can create meetings",
+        )
     participant_ids = _unique_participant_ids(payload.participant_user_ids, current_user.id)
     _validate_users_exist(db, participant_ids)
 
@@ -111,6 +126,9 @@ def create_meeting(db: Session, payload: MeetingCreate, current_user: User) -> M
     db.add(meeting)
     db.flush()
     _set_participants(db, meeting, participant_ids)
+    db.flush()
+    if _should_notify_upcoming(meeting):
+        create_meeting_reminder_notifications(db, meeting)
     db.commit()
     db.refresh(meeting)
     return get_meeting_by_id(db, meeting.id, current_user)
@@ -162,10 +180,10 @@ def get_meeting_by_id(db: Session, meeting_id: int, current_user: User) -> Meeti
 
 def update_meeting(db: Session, meeting_id: int, payload: MeetingUpdate, current_user: User) -> Meeting:
     meeting = get_meeting_by_id(db, meeting_id, current_user)
-    if meeting.created_by != current_user.id and not is_management_user(current_user):
+    if not is_management_user(current_user):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only the creator, ADMIN, or MANAGER can update meeting",
+            detail="Only ADMIN or MANAGER can update meeting",
         )
 
     update_data = payload.model_dump(exclude_unset=True)
@@ -180,16 +198,19 @@ def update_meeting(db: Session, meeting_id: int, payload: MeetingUpdate, current
         _validate_users_exist(db, participant_ids)
         _set_participants(db, meeting, participant_ids)
 
+    db.flush()
+    if "meeting_date" in update_data and _should_notify_upcoming(meeting):
+        create_meeting_reminder_notifications(db, meeting)
     db.commit()
     return get_meeting_by_id(db, meeting_id, current_user)
 
 
 def delete_meeting(db: Session, meeting_id: int, current_user: User) -> None:
     meeting = get_meeting_by_id(db, meeting_id, current_user)
-    if meeting.created_by != current_user.id and not is_management_user(current_user):
+    if not is_management_user(current_user):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only the creator, ADMIN, or MANAGER can delete meeting",
+            detail="Only ADMIN or MANAGER can delete meeting",
         )
     db.delete(meeting)
     db.commit()

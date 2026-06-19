@@ -18,7 +18,7 @@ def create_meeting(
     current_user: User = Depends(get_current_user),
 ):
     meeting = meeting_service.create_meeting(db, payload, current_user)
-    return meeting_service.serialize_meeting(meeting)
+    return meeting_service.serialize_meeting(meeting, current_user)
 
 
 @router.get("", response_model=list[MeetingResponse])
@@ -30,7 +30,7 @@ def list_meetings(
     current_user: User = Depends(get_current_user),
 ):
     meetings = meeting_service.get_meetings(db, current_user, category=category, tag=tag, search=search)
-    return [meeting_service.serialize_meeting(meeting) for meeting in meetings]
+    return [meeting_service.serialize_meeting(meeting, current_user) for meeting in meetings]
 
 
 @router.get("/{meeting_id}", response_model=MeetingResponse)
@@ -40,7 +40,7 @@ def get_meeting(
     current_user: User = Depends(get_current_user),
 ):
     meeting = meeting_service.get_meeting_by_id(db, meeting_id, current_user)
-    return meeting_service.serialize_meeting(meeting)
+    return meeting_service.serialize_meeting(meeting, current_user)
 
 
 @router.put("/{meeting_id}", response_model=MeetingResponse)
@@ -51,7 +51,7 @@ def update_meeting(
     current_user: User = Depends(get_current_user),
 ):
     meeting = meeting_service.update_meeting(db, meeting_id, payload, current_user)
-    return meeting_service.serialize_meeting(meeting)
+    return meeting_service.serialize_meeting(meeting, current_user)
 
 
 @router.delete("/{meeting_id}", status_code=status.HTTP_204_NO_CONTENT)

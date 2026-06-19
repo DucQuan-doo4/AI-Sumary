@@ -10,6 +10,8 @@ const priorities = ["LOW", "MEDIUM", "HIGH"];
 
 export default function MeetingDetail() {
   const { id } = useParams();
+  const currentUser = JSON.parse(localStorage.getItem("current_user") || "null");
+  const canManageMeeting = ["ADMIN", "MANAGER"].includes(currentUser?.role);
   const [meeting, setMeeting] = useState(null);
   const [tasks, setTasks] = useState([]);
   const [users, setUsers] = useState([]);
@@ -113,17 +115,28 @@ export default function MeetingDetail() {
               {meeting.meeting_date ? new Date(meeting.meeting_date).toLocaleString() : "No date"}
             </p>
           </div>
-          <button
-            onClick={analyze}
-            disabled={loadingAi}
-            className="rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-700 disabled:opacity-60"
-          >
-            {loadingAi ? "Analyzing..." : "Analyze with AI"}
-          </button>
+          {canManageMeeting && (
+            <button
+              onClick={analyze}
+              disabled={loadingAi}
+              className="rounded-md bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-700 disabled:opacity-60"
+            >
+              {loadingAi ? "Analyzing..." : "Analyze with AI"}
+            </button>
+          )}
         </div>
-        <p className="mt-4 whitespace-pre-wrap text-sm text-slate-700">
-          {meeting.content || meeting.description || "No content"}
-        </p>
+        {canManageMeeting && (
+          <div className="mt-4 rounded-md bg-slate-50 p-3">
+            <p className="text-xs uppercase text-slate-500">Source meeting content</p>
+            <p className="mt-2 whitespace-pre-wrap text-sm text-slate-700">
+              {meeting.content || meeting.description || "No content"}
+            </p>
+          </div>
+        )}
+        <div className="mt-4 rounded-md bg-emerald-50 p-3">
+          <p className="text-xs uppercase text-emerald-700">AI summary</p>
+          <p className="mt-2 whitespace-pre-wrap text-sm text-emerald-900">{meeting.summary || "No AI summary yet."}</p>
+        </div>
         <div className="mt-4 grid gap-3 text-sm md:grid-cols-2">
           <Info label="Category" value={meeting.category || "-"} />
           <Info label="Tags" value={meeting.tags?.length ? meeting.tags.join(", ") : "-"} />
@@ -132,17 +145,22 @@ export default function MeetingDetail() {
           <p className="text-xs uppercase text-slate-500">Participants</p>
           <div className="mt-2 flex flex-wrap gap-2">
             {meeting.participants?.map((participant) => (
-              <span key={participant.id} className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-700">
+              <span key={participant.id} className="group relative inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-700">
                 <UserAvatar user={participant} size="small" />
                 <span>{participant.full_name || participant.email}</span>
+                <span className="pointer-events-none absolute left-1/2 top-full z-20 mt-2 hidden w-56 -translate-x-1/2 rounded-lg border border-slate-200 bg-white p-3 text-left shadow-lg group-hover:block">
+                  <span className="block font-semibold text-slate-900">{participant.full_name || participant.email}</span>
+                  <span className="mt-1 block text-slate-500">{participant.email}</span>
+                  <span className="mt-2 block text-slate-600">{participant.department || "No department"} · {participant.room || "No room"}</span>
+                  <span className="mt-1 block text-slate-500">{participant.role}</span>
+                </span>
               </span>
             ))}
           </div>
         </div>
-        {meeting.summary && <div className="mt-4 rounded-md bg-emerald-50 p-3 text-sm text-emerald-800">{meeting.summary}</div>}
       </section>
 
-      {analysis && (
+      {canManageMeeting && analysis && (
         <section className="rounded-lg border border-slate-200 bg-white p-4">
           <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
             <div>

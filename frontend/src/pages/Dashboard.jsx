@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
 import axiosClient from "../api/axiosClient.js";
 import TaskTable from "../components/TaskTable.jsx";
+import StatusBadge from "../components/StatusBadge.jsx";
 
 export default function Dashboard() {
   const currentUser = JSON.parse(localStorage.getItem("current_user") || "null");
@@ -11,6 +13,8 @@ export default function Dashboard() {
   const [statusData, setStatusData] = useState([]);
   const [userData, setUserData] = useState([]);
   const [upcoming, setUpcoming] = useState([]);
+  const [assignedTasks, setAssignedTasks] = useState([]);
+  const [upcomingMeetings, setUpcomingMeetings] = useState([]);
   const [filters, setFilters] = useState({ category: "", tag: "" });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -28,11 +32,21 @@ export default function Dashboard() {
       axiosClient.get(`/dashboard/tasks-by-status?${query}`),
       axiosClient.get(`/dashboard/tasks-by-user?${query}`),
       axiosClient.get(`/dashboard/upcoming-deadlines?${query}`),
-    ]).then(([overviewRes, statusRes, userRes, upcomingRes]) => {
+      axiosClient.get(`/tasks?assignee_id=${currentUser?.id || ""}`),
+      axiosClient.get("/meetings"),
+    ]).then(([overviewRes, statusRes, userRes, upcomingRes, assignedRes, meetingsRes]) => {
       setOverview(overviewRes.data);
       setStatusData(statusRes.data);
       setUserData(userRes.data.map((item) => ({ ...item, name: item.assignee_name || `User ${item.assignee_id || "N/A"}` })));
       setUpcoming(upcomingRes.data);
+      setAssignedTasks(assignedRes.data);
+      const now = new Date();
+      setUpcomingMeetings(
+        meetingsRes.data
+          .filter((meeting) => meeting.meeting_date && new Date(meeting.meeting_date) >= now)
+          .sort((a, b) => new Date(a.meeting_date) - new Date(b.meeting_date))
+          .slice(0, 4),
+      );
     }).catch((err) => {
       setError(err.response?.data?.detail || "Failed to load dashboard");
     }).finally(() => {
@@ -55,7 +69,10 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold text-slate-900">Dashboard</h1>
+      <div>
+        <h1 className="text-2xl font-semibold text-slate-900">Welcome {currentUser?.full_name || currentUser?.email || "there"}</h1>
+        <p className="mt-1 text-sm text-slate-500">Here is your meeting and task overview.</p>
+      </div>
       {!isMember && (
         <div className="grid gap-3 rounded-lg border border-slate-200 bg-white p-4 md:grid-cols-3">
           <Field label="Category" value={filters.category} onChange={(value) => setFilters({ ...filters, category: value })} />
@@ -73,6 +90,51 @@ export default function Dashboard() {
           </div>
         ))}
       </div>
+      <section className="rounded-lg border border-slate-200 bg-white p-4">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h2 className="text-lg font-semibold text-slate-900">Assigned tasks</h2>
+            <p className="text-sm text-slate-500">Tasks currently assigned to you.</p>
+          </div>
+          <Link to="/tasks" className="rounded-md border border-slate-300 px-3 py-2 text-sm font-medium hover:bg-slate-50">View all</Link>
+        </div>
+        <div className="mt-4 grid gap-3 lg:grid-cols-2">
+          {assignedTasks.slice(0, 4).map((task) => (
+            <Link key={task.id} to={`/tasks/${task.id}`} className="block rounded-lg border border-slate-200 p-4 hover:border-slate-400">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <h3 className="font-semibold text-slate-900">{task.title}</h3>
+                  <p className="mt-1 text-xs text-slate-500">Meeting #{task.meeting_id}</p>
+                </div>
+                <StatusBadge value={task.status} />
+              </div>
+              <p className="mt-3 line-clamp-2 text-sm text-slate-600">{task.description || "No description"}</p>
+              <div className="mt-3 flex flex-wrap gap-2 text-xs text-slate-500">
+                <span>{task.deadline || "No deadline"}</span>
+                <StatusBadge value={task.priority} />
+              </div>
+            </Link>
+          ))}
+        </div>
+        {!assignedTasks.length && <div className="mt-4 rounded-lg border border-dashed border-slate-300 p-6 text-sm text-slate-500">No assigned tasks.</div>}
+      </section>
+
+      <section className="rounded-lg border border-slate-200 bg-white p-4">
+        <h2 className="text-lg font-semibold text-slate-900">Upcoming meetings</h2>
+        <div className="mt-4 grid gap-3 lg:grid-cols-2">
+          {upcomingMeetings.map((meeting) => (
+            <div key={meeting.id} className="rounded-lg border border-slate-200 p-4">
+              <h3 className="font-semibold text-slate-900">{meeting.title}</h3>
+              <p className="mt-1 text-sm text-slate-500">{new Date(meeting.meeting_date).toLocaleString()}</p>
+              <p className="mt-2 line-clamp-2 text-sm text-slate-600">{meeting.summary || meeting.description || "No summary yet"}</p>
+              <Link to={`/meetings/${meeting.id}`} className="mt-3 inline-flex rounded-md bg-slate-900 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-700">
+                View detail
+              </Link>
+            </div>
+          ))}
+        </div>
+        {!upcomingMeetings.length && <div className="mt-4 rounded-lg border border-dashed border-slate-300 p-6 text-sm text-slate-500">No upcoming meetings.</div>}
+      </section>
       {!isMember && (
         <>
           <div className="grid gap-4 lg:grid-cols-2">

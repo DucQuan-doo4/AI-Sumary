@@ -6,6 +6,7 @@ import UserAvatar from "../components/UserAvatar.jsx";
 
 export default function CreateMeeting() {
   const navigate = useNavigate();
+  const currentUser = JSON.parse(localStorage.getItem("current_user") || "null");
   const [form, setForm] = useState({
     title: "",
     description: "",
@@ -79,6 +80,14 @@ export default function CreateMeeting() {
       setLoading(false);
     }
   };
+
+  if (!["ADMIN", "MANAGER"].includes(currentUser?.role)) {
+    return (
+      <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+        Only ADMIN or MANAGER users can create meetings.
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-3xl">

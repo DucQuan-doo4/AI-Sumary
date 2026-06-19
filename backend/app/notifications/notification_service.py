@@ -1,6 +1,7 @@
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
+from app.meetings.models import Meeting
 from app.notifications.models import Notification
 from app.tasks.models import Task
 from app.users.models import User
@@ -18,6 +19,31 @@ def create_task_assigned_notification(db: Session, task: Task) -> Notification |
     )
     db.add(notification)
     return notification
+
+
+def create_meeting_reminder_notifications(db: Session, meeting: Meeting) -> list[Notification]:
+    notifications: list[Notification] = []
+    for participant in meeting.participants:
+        exists = (
+            db.query(Notification)
+            .filter(
+                Notification.user_id == participant.user_id,
+                Notification.title == "Upcoming meeting",
+                Notification.message.ilike(f"%#{meeting.id}%"),
+            )
+            .first()
+        )
+        if exists:
+            continue
+        notification = Notification(
+            user_id=participant.user_id,
+            task_id=None,
+            title="Upcoming meeting",
+            message=f'Meeting #{meeting.id} "{meeting.title}" is coming up at {meeting.meeting_date}.',
+        )
+        db.add(notification)
+        notifications.append(notification)
+    return notifications
 
 
 def get_notifications(db: Session, current_user: User) -> list[Notification]:
