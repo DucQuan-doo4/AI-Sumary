@@ -96,11 +96,15 @@ export default function CreateMeeting() {
       <form onSubmit={submit} className="mt-4 space-y-4 rounded-lg border border-slate-200 bg-white p-4">
         <Field label="Title" value={form.title} onChange={(value) => setForm({ ...form, title: value })} />
         <Field label="Description" value={form.description} onChange={(value) => setForm({ ...form, description: value })} />
+        <section className="rounded-lg border border-blue-100 bg-blue-50 p-4">
+          <h2 className="text-sm font-semibold text-blue-950">Schedule meeting ahead</h2>
+          <p className="mt-1 text-xs text-blue-700">Choose a future date and time to show this meeting in Upcoming meetings and send reminders when it is close.</p>
+          <Field label="Meeting date/time" type="datetime-local" value={form.meeting_date} onChange={(value) => setForm({ ...form, meeting_date: value })} />
+        </section>
         <label className="block text-sm font-medium text-slate-700">
           Meeting content
           <textarea className="mt-1 min-h-36 w-full rounded-md border border-slate-300 px-3 py-2" value={form.content} onChange={(e) => setForm({ ...form, content: e.target.value })} />
         </label>
-        <Field label="Schedule meeting date/time" type="datetime-local" value={form.meeting_date} onChange={(value) => setForm({ ...form, meeting_date: value })} />
         <Field label="Category" value={form.category} onChange={(value) => setForm({ ...form, category: value })} />
         <Field label="Tags" value={form.tags} onChange={(value) => setForm({ ...form, tags: value })} />
         <div className="rounded-lg border border-slate-200 p-3">

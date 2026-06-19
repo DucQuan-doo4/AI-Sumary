@@ -67,6 +67,18 @@ export default function UserManagement() {
     }
   };
 
+  const createDemoMembers = async () => {
+    setError("");
+    setSuccess("");
+    try {
+      const { data } = await axiosClient.post("/users/demo-members");
+      setSuccess(`Demo members ready: ${data.length} accounts. Password: member123`);
+      await load();
+    } catch (err) {
+      setError(err.response?.data?.detail || "Failed to create demo members");
+    }
+  };
+
   const startEdit = async (item) => {
     setError("");
     const { data } = await axiosClient.get(`/users/${item.id}/profile`);
@@ -108,7 +120,14 @@ export default function UserManagement() {
       {error && <div className="rounded-md bg-rose-50 p-3 text-sm text-rose-700">{error}</div>}
       {success && <div className="rounded-md bg-emerald-50 p-3 text-sm text-emerald-700">{success}</div>}
 
-      <div className="flex justify-end">
+      <div className="flex flex-wrap justify-end gap-2">
+        <button
+          type="button"
+          onClick={createDemoMembers}
+          className="rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+        >
+          Create 10 demo users
+        </button>
         <button
           type="button"
           onClick={() => setShowCreateForm((visible) => !visible)}

@@ -8,13 +8,25 @@ from app.auth.dependencies import get_current_user
 from app.auth.permissions import is_admin
 from app.auth.security import get_password_hash
 from app.database import get_db
-from app.users.models import User
+from app.users.models import User, UserRole
 from app.users.schemas import UserCreateAdmin, UserListItem, UserProfileUpdate, UserResponse
 
 
 router = APIRouter(prefix="/users", tags=["users"])
 AVATAR_DIR = Path("uploads/avatars")
 ALLOWED_AVATAR_TYPES = {"image/jpeg": ".jpg", "image/png": ".png", "image/webp": ".webp"}
+DEMO_MEMBERS = [
+    ("Minh Anh", "minh.anh-user@example.com"),
+    ("Quoc Bao", "quoc.bao-user@example.com"),
+    ("Thao Vy", "thao.vy-user@example.com"),
+    ("Gia Huy", "gia.huy-user@example.com"),
+    ("Ngoc Han", "ngoc.han-user@example.com"),
+    ("Duc Minh", "duc.minh-user@example.com"),
+    ("Linh Chi", "linh.chi-user@example.com"),
+    ("Hoang Nam", "hoang.nam-user@example.com"),
+    ("Bao Chau", "bao.chau-user@example.com"),
+    ("Anh Thu", "anh.thu-user@example.com"),
+]
 
 
 def _require_admin(current_user: User) -> None:
@@ -62,6 +74,33 @@ def create_user(
     db.commit()
     db.refresh(user)
     return user
+
+
+@router.post("/demo-members", response_model=list[UserResponse])
+def create_demo_members(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    _require_admin(current_user)
+    users: list[User] = []
+    for full_name, email in DEMO_MEMBERS:
+        user = db.query(User).filter(User.email == email).first()
+        if user is None:
+            user = User(
+                email=email,
+                full_name=full_name,
+                hashed_password=get_password_hash("member123"),
+                role=UserRole.MEMBER,
+                department="Demo Team",
+                room="Room A",
+                personal_info="Generated demo member account",
+                education="Demo profile",
+            )
+            db.add(user)
+            db.flush()
+        users.append(user)
+    db.commit()
+    return users
 
 
 @router.get("/me/profile", response_model=UserResponse)
